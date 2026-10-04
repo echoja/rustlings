@@ -26,6 +26,9 @@ jobs:
           cargo fmt --all -- --check
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 20
+    env:
+      CARGO_HOME: ${{ runner.temp }}/cargo
+      RUSTUP_HOME: ${{ runner.temp }}/rustup
   test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -45,3 +48,6 @@ jobs:
           cargo test
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 20
+    env:
+      CARGO_HOME: ${{ runner.temp }}/cargo
+      RUSTUP_HOME: ${{ runner.temp }}/rustup
