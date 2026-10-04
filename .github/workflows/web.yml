@@ -46,15 +46,16 @@ on:
     workflows: [ "Release" ]
     types:
       - completed
+  workflow_dispatch: {}
 
 # Alright, let's do it!
 jobs:
   web:
     name: Build and deploy site and docs
-    runs-on: ubuntu-latest
+    runs-on: echoja-rustlings-linux
     steps:
       # Setup
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
@@ -86,3 +87,5 @@ jobs:
           folder: public
           token: ${{ secrets.GITHUB_TOKEN }}
           single-commit: true
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 20
