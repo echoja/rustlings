@@ -55,6 +55,11 @@ jobs:
     runs-on: echoja-rustlings-linux
     steps:
       # Setup
+      - name: Isolate Rust toolchain state
+        shell: bash
+        run: |
+          echo "CARGO_HOME=$RUNNER_TEMP/cargo" >> "$GITHUB_ENV"
+          echo "RUSTUP_HOME=$RUNNER_TEMP/rustup" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -89,6 +94,3 @@ jobs:
           single-commit: true
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 20
-    env:
-      CARGO_HOME: ${{ runner.temp }}/cargo
-      RUSTUP_HOME: ${{ runner.temp }}/rustup
