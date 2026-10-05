@@ -46,15 +46,24 @@ on:
     workflows: [ "Release" ]
     types:
       - completed
+  workflow_dispatch: {}
 
 # Alright, let's do it!
 jobs:
   web:
     name: Build and deploy site and docs
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, ARM64, echoja-macos]
     steps:
       # Setup
-      - uses: actions/checkout@v3
+      - name: Isolate Rust toolchain state
+        shell: bash
+        run: |
+          echo "CARGO_HOME=$RUNNER_TEMP/cargo" >> "$GITHUB_ENV"
+          echo "RUSTUP_HOME=$RUNNER_TEMP/rustup" >> "$GITHUB_ENV"
+          export CARGO_HOME="$RUNNER_TEMP/cargo" RUSTUP_HOME="$RUNNER_TEMP/rustup"
+          curl --proto '=https' --tlsv1.2 --retry 3 --fail --silent --show-error https://sh.rustup.rs | sh -s -- --default-toolchain none --no-modify-path -y
+          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
@@ -66,8 +75,10 @@ jobs:
       # This will write all output to ./public/ (including copying mdbook's output to there)
       - name: Install and run oranda
         run: |
+          export HOME="$RUNNER_TEMP/oranda-home"
+          mkdir -p "$HOME"
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.3.1/oranda-installer.sh | sh
-          oranda build
+          "$HOME/.cargo/bin/oranda" build
 
       # Deploy to our gh-pages branch (creating it if it doesn't exist)
       # the "public" dir that oranda made above will become the root dir
@@ -86,3 +97,5 @@ jobs:
           folder: public
           token: ${{ secrets.GITHUB_TOKEN }}
           single-commit: true
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 20
